@@ -1,11 +1,20 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
+from rest_framework.response import Response
+from rest_framework import viewsets, status
 from .models import User, Person, Extract
 from datetime import datetime
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import User
+from .serializer import UserSerializer
+
+
 def userreg(request):
     return render(request, 'myapp/userreg.html', {})
 
@@ -126,3 +135,65 @@ def delete_current_user(request):
         messages.error(request, 'Ви не увійшли в систему.')
 
     return redirect('userreg')
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.filter(ID__range=(1, 100))
+    serializer_class = UserSerializer
+
+
+def user_create(request):
+    if request.method == 'POST':
+        # Отримуємо дані з форми або POST запиту
+        vuid = request.data.get('tuid')
+        vuname = request.data.get('tuname')
+        vuemail = request.data.get('tuemail')
+        vucontact = request.data.get('tucontact')
+        vudoc = request.data.get('tudoc')
+        vupass = request.data.get('tupass')
+        vums = request.data.get('tums')
+        terms = '1'
+
+        # Спочатку створюємо запис у таблиці person_info
+        try:
+            # Перевіряємо чи вже існує такий ID для Person
+            if not Person.objects.filter(ID=vuid).exists():
+                per = Person(ID=vuid, Phone_Number=vucontact, Documents=vudoc, Email=vuemail)
+                per.save()  # Зберігаємо персону в базі даних
+
+                # Після того, як персону збережено, створюємо запис у таблиці user
+                us = User(
+                    ID=vuid,
+                    Terms_Of_Use=terms,
+                    Hashed_Password=vupass,
+                    Mother_Surname=vums,
+                    Money_Left=1000.0,  # Початковий баланс
+                    User_Created=datetime.now(),
+                    Person=per  # Вказуємо зв'язок через зовнішній ключ
+                )
+                us.save()  # Зберігаємо користувача
+
+                return Response({'message': 'User created successfully.'}, status=status.HTTP_201_CREATED)
+
+            else:
+                return Response({'error': 'Person with this ID already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def user_list(request):
+    view = UserViewSet.as_view({'get': 'list'})
+    return view(request)
+
+def user_retrieve(request, pk):
+    view = UserViewSet.as_view({'get': 'retrieve'})
+    return view(request, pk=pk)
+
+def user_update(request, pk):
+    view = UserViewSet.as_view({'put': 'update', 'patch': 'partial_update'})
+    return view(request, pk=pk)
+
+def user_delete(request, pk):
+    view = UserViewSet.as_view({'delete': 'destroy'})
+    return view(request, pk=pk)

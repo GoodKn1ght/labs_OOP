@@ -1,5 +1,11 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
+from rest_framework.routers import DefaultRouter
+from .views import UserViewSet
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
 
 urlpatterns = [
     path('userreg/', views.userreg, name='userreg'),  # сторінка реєстрації
@@ -11,4 +17,5 @@ urlpatterns = [
     # Інші ваші маршрути
     path('transfer_funds/<int:sender_id>/', views.transfer_funds, name='transfer_funds'),
     path('delete_account/', views.delete_current_user, name='delete_account'),
+    path('', include(router.urls)),
 ]
