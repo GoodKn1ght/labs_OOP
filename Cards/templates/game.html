@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            color: #444;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .hand, .top-cards, .bot-hands {
+            margin-bottom: 20px;
+        }
+        .hand ul, .top-cards ul, .bot-hands ul {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .hand li, .top-cards li, .bot-hands li {
+            margin-right: 10px;
+            padding: 10px;
+            background: #e6f7ff;
+            border: 1px solid #b3e5fc;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+       <div class="hand">
+    <h2>Your Hand:</h2>
+    <form method="POST" action="{% url 'play_card' %}">
+        {% csrf_token %}
+        <ul>
+            {% for card in player_hand %}
+            <li>
+                {{ card }}
+                <button type="submit" name="card_index" value="{{ forloop.counter0 }}">Play</button>
+            </li>
+            {% endfor %}
+        </ul>
+        <button type="submit" name="take" value="1">Take</button>
+    </form>
+</div>
+
+{% if messages %}
+<div class="messages">
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+        <div class="top-cards">
+            <h2>Top Cards:</h2>
+            <ul>
+                {% for card in top_cards %}
+                <li>{{ card }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="bot-hands">
+            <h2>Bot Hands:</h2>
+            <ul>
+                {% for bot_hand in bot_hands %}
+                <li>Bot {{ forloop.counter }}: {{ bot_hand|length }} cards</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <p>Make your move by selecting a card. Bots will play automatically after your turn.</p>
+
+        <form method="get" action="{% url 'game' difficulty=difficulty %}">
+    <input type="hidden" name="reset" value="1">
+    <button type="submit">Restart Game</button>
+</form>
+
+    </div>
+</body>
+</html>
